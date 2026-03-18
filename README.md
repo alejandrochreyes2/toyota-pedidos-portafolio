@@ -4,6 +4,20 @@
 
 ---
 
+## Documentación Técnica Completa
+
+| Documento | Descripción |
+|-----------|-------------|
+| [Arquitectura Técnica](ARQUITECTURA_TECNICA.md) | Diagrama Draw.io + descripción completa de microservicios |
+| [Plan PMO](PMO_PLAN_PROYECTO.md) | Cronograma 5 fases, presupuesto $20M COP, gestión de riesgos |
+| [Documentación Swagger](SWAGGER_DOCUMENTACION.md) | Todos los endpoints documentados con ejemplos |
+| [Guía Postman](POSTMAN_GUIA.md) | Instrucciones para importar y ejecutar las 18 pruebas |
+| [Colección Postman](ProyectoPedidos.postman_collection.json) | 24 requests listos para importar directamente |
+| [Manual de Usuario](MANUAL_USUARIO.md) | Guía paso a paso para usuarios finales |
+| [Manual Técnico](MANUAL_TECNICO_PRUEBAS.md) | 18 escenarios de prueba documentados |
+
+---
+
 ## Demo en Vivo — Pruébalo Ahora
 
 **URL Producción:** https://gentle-water-0ba98b90f.1.azurestaticapps.net
