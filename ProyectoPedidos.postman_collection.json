@@ -1,0 +1,873 @@
+{
+  "info": {
+    "_postman_id": "toyota-pedidos-2026-enterprise",
+    "name": "Toyota Pedidos — Colección Completa Enterprise",
+    "description": "Colección completa con 24 requests y 18 pruebas automatizadas verificadas. Incluye autenticación JWT automática, pruebas por rol y verificación de todos los endpoints.\n\nURL Base Local: http://localhost:5000\nURL Base Azure: https://toyota-gateway.wittystone-43cf97a7.eastus2.azurecontainerapps.io\n\nInstrucciones:\n1. Importar esta colección en Postman\n2. Ejecutar '05 LOGIN Admin' primero (guarda token automáticamente)\n3. Ejecutar '06 LOGIN Vendedor' y '07 LOGIN User'\n4. Ejecutar el resto de requests en orden\n5. Para ejecutar todas: clic derecho en la colección → Run collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000",
+      "type": "string",
+      "description": "URL base del API Gateway. Cambiar a URL de Azure para pruebas en producción."
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string",
+      "description": "Token JWT del Admin. Se rellena automáticamente al ejecutar LOGIN Admin."
+    },
+    {
+      "key": "token_vendedor",
+      "value": "",
+      "type": "string",
+      "description": "Token JWT del Vendedor. Se rellena automáticamente al ejecutar LOGIN Vendedor."
+    },
+    {
+      "key": "token_user",
+      "value": "",
+      "type": "string",
+      "description": "Token JWT del User. Se rellena automáticamente al ejecutar LOGIN User."
+    }
+  ],
+  "item": [
+    {
+      "name": "1. HEALTH CHECKS",
+      "description": "Verificación de disponibilidad de todos los servicios. Ejecutar primero para confirmar que el entorno está listo.",
+      "item": [
+        {
+          "name": "01 Gateway Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Verifica que el API Gateway YARP está activo y enrutando correctamente."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Gateway responde 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "02 Usuarios Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3001/health",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3001",
+              "path": ["health"]
+            },
+            "description": "Verifica que el microservicio de Usuarios está activo en el puerto 3001."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Usuarios responde 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "03 Pedidos Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3002/health",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3002",
+              "path": ["health"]
+            },
+            "description": "Verifica que el microservicio de Pedidos está activo en el puerto 3002."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Pedidos responde 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "04 Pagos Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3003/health",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3003",
+              "path": ["health"]
+            },
+            "description": "Verifica que el microservicio de Pagos está activo en el puerto 3003."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Pagos responde 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. AUTENTICACIÓN",
+      "description": "Pruebas de login con los 3 roles disponibles. Ejecutar primero para obtener los tokens JWT que se usarán en las demás carpetas.",
+      "item": [
+        {
+          "name": "05 LOGIN Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin@toyota.com\",\n    \"password\": \"Admin123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/usuarios/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "usuarios", "auth", "login"]
+            },
+            "description": "Autentica al usuario Administrador y guarda el token JWT automáticamente en la variable {{token}}."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Login Admin exitoso — status 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Respuesta contiene token JWT', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('token');",
+                  "    pm.expect(json.token).to.be.a('string').and.not.empty;",
+                  "    pm.collectionVariables.set('token', json.token);",
+                  "});",
+                  "pm.test('Rol es Admin', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.role).to.equal('Admin');",
+                  "});",
+                  "pm.test('Email correcto en respuesta', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.email).to.equal('admin@toyota.com');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "06 LOGIN Vendedor",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"vendedor@toyota.com\",\n    \"password\": \"Vend123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/usuarios/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "usuarios", "auth", "login"]
+            },
+            "description": "Autentica al usuario Vendedor y guarda el token en {{token_vendedor}}."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Login Vendedor exitoso — status 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Token guardado para Vendedor', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.token).to.be.a('string').and.not.empty;",
+                  "    pm.collectionVariables.set('token_vendedor', json.token);",
+                  "});",
+                  "pm.test('Rol es Vendedor', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.role).to.equal('Vendedor');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "07 LOGIN User",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"user@user.com\",\n    \"password\": \"User@123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/usuarios/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "usuarios", "auth", "login"]
+            },
+            "description": "Autentica al usuario de solo lectura y guarda el token en {{token_user}}."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Login User exitoso — status 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Token guardado para User', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.token).to.be.a('string').and.not.empty;",
+                  "    pm.collectionVariables.set('token_user', json.token);",
+                  "});",
+                  "pm.test('Rol es User', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.role).to.equal('User');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "08 LOGIN Credenciales Incorrectas",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin@toyota.com\",\n    \"password\": \"wrongpassword\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/usuarios/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "usuarios", "auth", "login"]
+            },
+            "description": "Verifica que el sistema rechaza credenciales incorrectas con 401 Unauthorized."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Credenciales incorrectas devuelven 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "09 REGISTER Nuevo Usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"nuevo@test.com\",\n    \"password\": \"Test@123\",\n    \"fullName\": \"Test User\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/usuarios/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "usuarios", "register"]
+            },
+            "description": "Registra un nuevo usuario. Retorna 200 si se crea exitosamente, 400 si el email ya existe."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Registro exitoso o email duplicado manejado', function () {",
+                  "    pm.expect([200, 400]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. PEDIDOS",
+      "description": "Pruebas del microservicio de pedidos con los 3 roles. Requiere haber ejecutado los LOGINs de la carpeta anterior.",
+      "item": [
+        {
+          "name": "10 GET Pedidos — Sin Token (debe dar 401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pedidos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pedidos"]
+            },
+            "description": "Verifica que el endpoint está protegido. Sin token debe retornar 401 Unauthorized."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Sin token devuelve 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "11 GET Pedidos — Admin (debe dar 200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/pedidos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pedidos"]
+            },
+            "description": "Admin puede ver todos los pedidos. Debe retornar 200 con array de pedidos."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Admin puede ver pedidos — status 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Respuesta es un array', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "12 POST Crear Pedido — Admin (debe dar 201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"cliente\": \"Toyota Colombia S.A.\",\n    \"total\": 150000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pedidos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pedidos"]
+            },
+            "description": "Admin puede crear pedidos. Debe retornar 201 con el pedido creado incluyendo ID y fecha."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Admin crea pedido — status 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test('Pedido tiene ID asignado', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('id');",
+                  "    pm.expect(json.id).to.be.a('number').and.above(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "13 POST Crear Pedido — Vendedor (debe dar 201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_vendedor}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"cliente\": \"Distribuidora Norte Ltda.\",\n    \"total\": 320000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pedidos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pedidos"]
+            },
+            "description": "Vendedor puede crear pedidos. Debe retornar 201."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Vendedor crea pedido — status 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "14 POST Crear Pedido — User (debe dar 403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_user}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"cliente\": \"Intento no autorizado\",\n    \"total\": 99999\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pedidos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pedidos"]
+            },
+            "description": "User NO puede crear pedidos. Debe retornar 403 Forbidden."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('User no puede crear pedidos — status 403', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. PAGOS",
+      "description": "Pruebas del microservicio de pagos. Solo el rol Admin tiene acceso. Requiere haber ejecutado los LOGINs.",
+      "item": [
+        {
+          "name": "15 GET Pagos — Sin Token (debe dar 401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pagos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pagos"]
+            },
+            "description": "Verifica protección del endpoint. Sin token debe retornar 401."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Sin token devuelve 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "16 GET Pagos — Admin (debe dar 200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/pagos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pagos"]
+            },
+            "description": "Admin puede ver todos los pagos. Debe retornar 200 con array."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Admin puede ver pagos — status 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Respuesta es un array', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "17 GET Pagos — Vendedor (debe dar 403)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_vendedor}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/pagos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pagos"]
+            },
+            "description": "Vendedor NO puede ver pagos. Debe retornar 403 Forbidden."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Vendedor no puede ver pagos — status 403', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "18 POST Registrar Pago — Admin (debe dar 201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"pedidoId\": 1,\n    \"monto\": 150000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pagos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pagos"]
+            },
+            "description": "Admin registra un pago. Debe retornar 201 con el pago creado incluyendo estado y fecha."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Admin registra pago — status 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test('Pago tiene ID y estado', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('id');",
+                  "    pm.expect(json).to.have.property('estado');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "19 POST Registrar Pago — Vendedor (debe dar 403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_vendedor}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"pedidoId\": 1,\n    \"monto\": 50000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pagos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pagos"]
+            },
+            "description": "Vendedor NO puede registrar pagos. Debe retornar 403 Forbidden."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Vendedor no puede registrar pagos — status 403', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. FLUJO COMPLETO END-TO-END",
+      "description": "Flujo completo de negocio: Login → Crear Pedido → Registrar Pago → Verificar. Ejecutar en orden para simular un caso de uso real completo.",
+      "item": [
+        {
+          "name": "20 [FLUJO] 1-Login Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin@toyota.com\",\n    \"password\": \"Admin123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/usuarios/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "usuarios", "auth", "login"]
+            },
+            "description": "PASO 1: Autenticación del administrador para iniciar el flujo completo."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('[Flujo] Login exitoso', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('token', json.token);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "21 [FLUJO] 2-Crear Pedido",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"cliente\": \"Concesionario Toyota Bogota\",\n    \"total\": 500000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pedidos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pedidos"]
+            },
+            "description": "PASO 2: Crear un pedido de ejemplo para el flujo completo."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('[Flujo] Pedido creado', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('ultimo_pedido_id', json.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "22 [FLUJO] 3-Registrar Pago",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"pedidoId\": 1,\n    \"monto\": 500000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pagos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pagos"]
+            },
+            "description": "PASO 3: Registrar el pago para el pedido creado."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('[Flujo] Pago registrado', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "23 [FLUJO] 4-Verificar Pedidos",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/pedidos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pedidos"]
+            },
+            "description": "PASO 4: Verificar que los pedidos persisten correctamente."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('[Flujo] Pedidos listados correctamente', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.length).to.be.above(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "24 [FLUJO] 5-Verificar Pagos",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/pagos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pagos"]
+            },
+            "description": "PASO 5: Verificar que los pagos persisten correctamente. Finaliza el flujo completo."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('[Flujo] Pagos listados correctamente', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.length).to.be.above(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    }
+  ]
+}

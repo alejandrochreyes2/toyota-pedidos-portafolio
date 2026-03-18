@@ -2,6 +2,7 @@
 *.ts
 *.js
 *.json
+!ProyectoPedidos.postman_collection.json
 *.yml
 *.yaml
 *.xml
